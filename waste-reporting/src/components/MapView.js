@@ -18,7 +18,6 @@ const redIcon = new L.Icon({
   iconSize: [32, 32]
 });
 
-// Function to pick icon
 const getIcon = (severity) => {
   if (severity === "low") return greenIcon;
   if (severity === "medium") return orangeIcon;
@@ -27,7 +26,6 @@ const getIcon = (severity) => {
 
 export default function MapView() {
 
-  // 🔥 STATE (important)
   const [reports, setReports] = useState([
     { id: 1, lat: 13.0827, lng: 80.2707, severity: "low", status: "reported" },
     { id: 2, lat: 13.09, lng: 80.28, severity: "medium", status: "reported" },
@@ -36,7 +34,6 @@ export default function MapView() {
     { id: 5, lat: 13.06, lng: 80.29, severity: "low", status: "reported" }
   ]);
 
-  // 🔥 Claim function
   const handleClaim = (id) => {
     setReports(prev =>
       prev.map(report =>
@@ -47,39 +44,63 @@ export default function MapView() {
     );
   };
 
+  const total = reports.length;
+  const inProgress = reports.filter(r => r.status === "in-progress").length;
+  const cleaned = reports.filter(r => r.status === "cleaned").length;
+
   return (
-    <MapContainer
-      center={[13.0827, 80.2707]}
-      zoom={13}
-      style={{ height: "100vh", width: "100%" }}
-    >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    <div style={{ position: "relative" }}>
 
-      {reports.map((report) => (
-        <Marker
-          key={report.id}
-          position={[report.lat, report.lng]}
-          icon={getIcon(report.severity)}
-        >
-          <Popup>
-            <b>Garbage Spot</b><br />
-            Severity: {report.severity}<br />
-            Status: {report.status} <br /><br />
+      {/* Dashboard */}
+      <div style={{
+        position: "absolute",
+        top: 10,
+        left: 10,
+        zIndex: 1000,
+        background: "white",
+        padding: "10px",
+        borderRadius: "8px"
+      }}>
+        <b>Dashboard</b><br />
+        Total: {total} <br />
+        In Progress: {inProgress} <br />
+        Cleaned: {cleaned}
+      </div>
 
-            {report.status === "reported" && (
-              <button onClick={() => handleClaim(report.id)}>
-                Claim
-              </button>
-            )}
+      <MapContainer
+        center={[13.0827, 80.2707]}
+        zoom={13}
+        style={{ height: "100vh", width: "100%" }}
+      >
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-            {report.status === "in-progress" && (
-              <span style={{ color: "orange" }}>
-                🚧 In Progress
-              </span>
-            )}
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
+        {reports.map((report) => (
+          <Marker
+            key={report.id}
+            position={[report.lat, report.lng]}
+            icon={getIcon(report.severity)}
+          >
+            <Popup>
+              <b>Garbage Spot</b><br />
+              Severity: {report.severity}<br />
+              Status: {report.status} <br /><br />
+
+              {report.status === "reported" && (
+                <button onClick={() => handleClaim(report.id)}>
+                  Claim
+                </button>
+              )}
+
+              {report.status === "in-progress" && (
+                <span style={{ color: "orange" }}>
+                  🚧 In Progress
+                </span>
+              )}
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+
+    </div>
   );
 }
