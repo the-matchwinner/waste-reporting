@@ -1,3 +1,4 @@
+import { useMapEvents } from 'react-leaflet';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { useState } from 'react';
@@ -47,6 +48,32 @@ export default function MapView() {
   const total = reports.length;
   const inProgress = reports.filter(r => r.status === "in-progress").length;
   const cleaned = reports.filter(r => r.status === "cleaned").length;
+  const handleClean = (id) => {
+    setReports(prev =>
+      prev.map(report =>
+        report.id === id
+          ? { ...report, status: "cleaned" }
+          : report
+      )
+    );
+  };
+  function AddReport({ setReports }) {
+    useMapEvents({
+      click(e) {
+        const newReport = {
+          id: Date.now(),
+          lat: e.latlng.lat,
+          lng: e.latlng.lng,
+          severity: "low",
+          status: "reported"
+        };
+  
+        setReports(prev => [...prev, newReport]);
+      }
+    });
+  
+    return null;
+  }
 
   return (
     <div style={{ position: "relative" }}>
@@ -68,38 +95,50 @@ export default function MapView() {
       </div>
 
       <MapContainer
-        center={[13.0827, 80.2707]}
-        zoom={13}
-        style={{ height: "100vh", width: "100%" }}
-      >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+  center={[13.0827, 80.2707]}
+  zoom={13}
+  style={{ height: "100vh", width: "100%" }}
+>
+  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-        {reports.map((report) => (
-          <Marker
-            key={report.id}
-            position={[report.lat, report.lng]}
-            icon={getIcon(report.severity)}
-          >
-            <Popup>
-              <b>Garbage Spot</b><br />
-              Severity: {report.severity}<br />
-              Status: {report.status} <br /><br />
+  {/* ✅ ADD THIS HERE (inside, not before props) */}
+  <AddReport setReports={setReports} />
 
-              {report.status === "reported" && (
-                <button onClick={() => handleClaim(report.id)}>
-                  Claim
-                </button>
-              )}
+  {reports.map((report) => (
+    <Marker
+      key={report.id}
+      position={[report.lat, report.lng]}
+      icon={getIcon(report.severity)}
+    >
+      <Popup>
+        <b>Garbage Spot</b><br />
+        Severity: {report.severity}<br />
+        Status: {report.status} <br /><br />
 
-              {report.status === "in-progress" && (
-                <span style={{ color: "orange" }}>
-                  🚧 In Progress
-                </span>
-              )}
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+        {report.status === "reported" && (
+          <button onClick={() => handleClaim(report.id)}>
+            Claim
+          </button>
+        )}
+
+        {report.status === "in-progress" && (
+          <>
+            <span style={{ color: "orange" }}>🚧 In Progress</span><br /><br />
+            <button onClick={() => handleClean(report.id)}>
+              Mark as Cleaned
+            </button>
+          </>
+        )}
+
+        {report.status === "cleaned" && (
+          <span style={{ color: "green" }}>
+            ✅ Cleaned
+          </span>
+        )}
+      </Popup>
+    </Marker>
+  ))}
+</MapContainer>
 
     </div>
   );
